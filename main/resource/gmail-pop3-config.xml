@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns = "http://www.springframework.org/schema/beans"
+	   xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:int = "http://www.springframework.org/schema/integration"
+	   xmlns:int-mail = "http://www.springframework.org/schema/integration/mail"
+	   xmlns:util = "http://www.springframework.org/schema/util"
+	   xsi:schemaLocation = "http://www.springframework.org/schema/beans
+	   						 http://www.springframework.org/schema/beans/spring-beans.xsd
+						   	 http://www.springframework.org/schema/integration
+						   	 http://www.springframework.org/schema/integration/spring-integration.xsd
+						   	 http://www.springframework.org/schema/integration/mail
+						   	 http://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
+						   	 http://www.springframework.org/schema/util
+						   	 http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<int:channel id="pop3Channel"/>
+
+	<util:properties id="pop3MailProperties">
+		<prop key="mail.pop3.socketFactory.fallback">false</prop>
+		<prop key="mail.debug">true</prop>
+		<prop key="mail.pop3.port">995</prop>
+		<prop key="mail.pop3.socketFactory.class">javax.net.ssl.SSLSocketFactory</prop>
+		<prop key="mail.pop3.socketFactory.port">995</prop>
+	</util:properties>
+
+	<int-mail:inbound-channel-adapter
+		channel="pop3Channel"
+		auto-startup="true"
+	  	should-delete-messages="true"
+	  	java-mail-properties="pop3MailProperties"
+		store-uri="pop3://${pop3.username}:${pop3.password}@${pop3.hostname}/INBOX">
+
+		<int:poller fixed-rate="20000"/>
+
+	</int-mail:inbound-channel-adapter>
+
+</beans>

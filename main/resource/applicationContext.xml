@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns = "http://www.springframework.org/schema/beans"
+	   xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context = "http://www.springframework.org/schema/context"
+	   xmlns:int = "http://www.springframework.org/schema/integration"
+	   xmlns:int-mail = "http://www.springframework.org/schema/integration/mail"
+	   xmlns:util = "http://www.springframework.org/schema/util"
+	   xsi:schemaLocation = "http://www.springframework.org/schema/beans
+	   						 http://www.springframework.org/schema/beans/spring-beans.xsd
+						     http://www.springframework.org/schema/context
+						     http://www.springframework.org/schema/context/spring-context.xsd
+						   	 http://www.springframework.org/schema/integration
+						   	 http://www.springframework.org/schema/integration/spring-integration.xsd
+						   	 http://www.springframework.org/schema/integration/mail
+						   	 http://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
+						   	 http://www.springframework.org/schema/util
+						   	 http://www.springframework.org/schema/util/spring-util.xsd">
+
+
+	<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:configs.properties"/>
+	</bean>
+
+	<bean id="payloadUtils" class="com.workfront.si.util.PayloadUtils"/>
+
+	<context:component-scan base-package="com.workfront.si"/>
+
+	<int:annotation-config/>
+
+	<context:annotation-config/>
+
+	<int:logging-channel-adapter id="errorLogger"   log-full-message="true" level="ERROR"/>
+	<int:logging-channel-adapter id="trackerLogger" logger-name="Tracker" log-full-message="true" level="INFO"/>
+
+	<import resource="gmail-pop3-config.xml"/>
+
+	<import resource="smtp-gmail-config.xml"/>
+
+	<int:gateway id="messageGateway"
+				 error-channel="errorLogger"
+				 default-request-channel="pop3Channel"
+				 service-interface="com.workfront.si.mail.gateway.MessageGateway"/>
+
+	<int:channel id="inputChannel"/>
+
+	<int:channel id="outputChannel"/>
+
+	<int:channel id="replyChannel"/>
+
+	<int:channel id="messageChannel"/>
+
+	<int:recipient-list-router input-channel="pop3Channel">
+		<int:recipient channel="inputChannel"/>
+		<int:recipient channel="trackerLogger"/>
+	</int:recipient-list-router>
+
+	<int:chain input-channel="inputChannel" output-channel="outputChannel">
+
+		<int:filter ref="emptySubjectFilter"/>
+
+		<int:header-enricher>
+			<int:header name="company" expression="@payloadUtils.getCompanyType(payload)"/>
+		</int:header-enricher>
+
+	</int:chain>
+
+	<int:header-value-router input-channel="outputChannel" header-name="company">
+		<int:mapping value="previous" channel="replyChannel"/>
+		<int:mapping value="current" channel="messageChannel"/>
+	</int:header-value-router>
+
+	<int:chain input-channel="replyChannel" output-channel="smtpChannel">
+		<int:transformer ref="unWantedMessageTransformer"/>
+	</int:chain>
+
+</beans>

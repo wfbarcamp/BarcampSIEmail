@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns = "http://www.springframework.org/schema/beans"
+	   xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:int = "http://www.springframework.org/schema/integration"
+	   xmlns:int-mail = "http://www.springframework.org/schema/integration/mail"
+	   xmlns:util = "http://www.springframework.org/schema/util"
+	   xsi:schemaLocation = "http://www.springframework.org/schema/beans
+	   						 http://www.springframework.org/schema/beans/spring-beans.xsd
+						   	 http://www.springframework.org/schema/integration
+						   	 http://www.springframework.org/schema/integration/spring-integration.xsd
+						   	 http://www.springframework.org/schema/integration/mail
+						   	 http://www.springframework.org/schema/integration/mail/spring-integration-mail.xsd
+						   	 http://www.springframework.org/schema/util
+						   	 http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<int:channel id="smtpChannel"/>
+
+	<util:properties id="smtpMailProperties">
+		<prop key="mail.debug">true</prop>
+		<prop key="mail.smtps.auth">true</prop>
+		<prop key="mail.smtp.starttls.enable">true</prop>
+	</util:properties>
+
+	<int-mail:outbound-channel-adapter
+		channel="smtpChannel"
+	   	host="${smtp.hostname}"
+	   	port="${smtp.port}"
+	   	username="${smpt.username}"
+	   	password="${smpt.password}"
+	   	java-mail-properties="smtpMailProperties"/>
+
+</beans>
